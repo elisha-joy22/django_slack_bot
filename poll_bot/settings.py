@@ -1,22 +1,20 @@
 from pathlib import Path
+from dotenv import load_dotenv
+from datetime import datetime,time
+from celery.schedules import crontab
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv()
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-8yula%q3hm74+e4&9+^lp23f(5%^5sng+#v%)hmfe1yw^y08q+'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,10 +55,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'poll_bot.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -68,9 +62,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -88,9 +79,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -100,12 +88,42 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+SLACK_LUNCH_TOKEN = os.environ.get("SLACK_LUNCH_BOT_TOKEN")
+SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
+LUNCH_CHANNEL_ID = os.environ.get("LUNCH_CHANNEL_ID")
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+ADMINS = os.environ.get("ADMINS")
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+QR_CODE_LINK = os.environ.get("QR_CODE_LINK")
+LUNCH_BOT_ID = os.environ.get("LUNCH_BOT_ID")
+LUNCH_BOT_NAME = os.environ.get("LUNCH_BOT_NAME")
+
+daily_poll_start_time = time(hour=6,minute=7)
+daily_poll_end_time =  time(hour=6,minute=11)
+lunch_time = time(hour=12,minute=30)
+
+
+
+
+# settings.py
+
+CELERY_BEAT_SCHEDULE = {
+    'post-lunch-poll': {
+        'task': 'your_app.tasks.post_lunch_poll',
+        'schedule': crontab(hour=daily_poll_start_time.hour, minute=daily_poll_start_time.minute),
+    },
+    'post-poll-expired': {
+        'task': 'your_app.tasks.post_poll_expired',
+        'schedule': crontab(hour=daily_poll_end_time.hour, minute=daily_poll_end_time.minute),
+    },
+    'send-qr-code-to-users': {
+        'task': 'your_app.tasks.send_qr_code_to_users',
+        'schedule': crontab(hour=daily_poll_end_time.hour, minute=daily_poll_end_time.minute + 1),
+    },
+}
